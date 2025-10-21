@@ -13,6 +13,8 @@ namespace fs = std::filesystem;
 inline bool isAudioFile(const fs::path &filePath);
 std::set<fs::path> collect(const fs::path &directory, bool directoriesOnly = true);
 void displayTrackData(const fs::path track);
+void playTrack(const fs::path track);
+void playTracks(const std::set<fs::path> &tracks);
 
 int main()
 {
@@ -98,4 +100,19 @@ void displayTrackData(const fs::path track)
     TagLib::String albumName = f.tag()->album();
     unsigned int trackNumber = f.tag()->track();
     printf("   %d - %s\n", trackNumber, trackName.toCString(true));
+}
+
+void playTrack(const fs::path track)
+{
+    std::string command = "mplayer -vo null -msglevel all=0 \"" + track.string() + "\"";
+    system(command.c_str());
+}
+
+void playTracks(const std::set<fs::path> &tracks)
+{
+    std::string command = "mplayer -vo null -msglevel all=0";
+
+    for (const auto &track : tracks)
+        command += " \"" + track.string() + "\"";
+    system(command.c_str());
 }
