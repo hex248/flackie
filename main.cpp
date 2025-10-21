@@ -3,6 +3,7 @@
 #include <vector>
 #include <set>
 #include <map>
+#include <random>
 
 #include <filesystem>
 namespace fs = std::filesystem;
@@ -10,6 +11,7 @@ namespace fs = std::filesystem;
 #include <taglib/fileref.h>
 #include <taglib/tag.h>
 
+std::size_t random_0_to_n(std::size_t n);
 inline bool isAudioFile(const fs::path &filePath);
 std::set<fs::path> collect(const fs::path &directory, bool directoriesOnly = true);
 void displayLibrary(const std::map<std::string, std::set<fs::path>> &artistMap,
@@ -43,28 +45,34 @@ int main()
         }
     }
 
-    for (const auto &artistPair : artistMap)
-    {
-        const std::string &artistName = artistPair.first;
-        const std::set<fs::path> &albums = artistPair.second;
+    displayLibrary(artistMap, albumMap);
 
-        printf("%s\n", artistName.c_str());
+    auto album = albumMap.begin();
+    std::advance(album, random_0_to_n(albumMap.size()));
 
-        for (const auto &albumPath : albums)
-        {
-            std::string albumName = albumPath.filename().string();
-            printf("  %s\n", albumName.c_str());
-
-            const std::set<fs::path> &tracks = albumMap[albumName];
-            for (const auto &track : tracks)
-            {
-                displayTrackData(track);
-            }
-        }
-    }
+    printf("Playing album: %s\n", album->first.c_str());
+    displayTrackData(*album->second.begin());
+    playTracks(album->second);
 
     return 0;
 }
+
+std::size_t random_0_to_n(std::size_t n)
+{
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    if (n == 0)
+        return 0;
+    std::uniform_int_distribution<std::size_t> dist(0, n - 1);
+    return dist(gen);
+}
+
+auto getRandomMapItem = [](const auto &map)
+{
+    auto item = map.begin();
+    std::advance(item, random_0_to_n(map.size()));
+    return item;
+};
 
 inline bool isAudioFile(const fs::path &filePath)
 {
