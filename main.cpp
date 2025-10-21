@@ -1,3 +1,4 @@
+#include <regex>
 #include <string>
 #include <iostream>
 #include <vector>
@@ -16,14 +17,13 @@ inline bool isAudioFile(const fs::path &filePath);
 std::set<fs::path> collect(const fs::path &directory, bool directoriesOnly = true);
 void displayLibrary(const std::map<std::string, std::set<fs::path>> &artistMap,
                     const std::map<std::string, std::set<fs::path>> &albumMap);
-void displayTrackData(const fs::path track);
+void displayTrackData(const fs::path track, const std::string &prefix = "", const std::string &suffix = "");
 void playTrack(const fs::path track);
 void playTracks(const std::set<fs::path> &tracks);
+void displayProgress(const std::string &line);
 
 int main()
 {
-    printf("flackie\n");
-
     std::string artistsDirectory = "/home/ob/music/artists";
     std::set<fs::path> artists = collect(artistsDirectory);
     std::map<std::string, std::set<fs::path>> artistMap;
@@ -45,13 +45,12 @@ int main()
         }
     }
 
-    displayLibrary(artistMap, albumMap);
+    // displayLibrary(artistMap, albumMap);
 
     auto album = albumMap.begin();
     std::advance(album, random_0_to_n(albumMap.size()));
 
-    printf("Playing album: %s\n", album->first.c_str());
-    displayTrackData(*album->second.begin());
+    printf("playing album: %s\n", album->first.c_str());
     playTracks(album->second);
 
     return 0;
@@ -123,7 +122,7 @@ void displayLibrary(const std::map<std::string, std::set<fs::path>> &artistMap,
                 const std::set<fs::path> &tracks = albumIt->second;
                 for (const auto &track : tracks)
                 {
-                    displayTrackData(track);
+                    displayTrackData(track, "    ");
                 }
             }
             else
@@ -135,27 +134,97 @@ void displayLibrary(const std::map<std::string, std::set<fs::path>> &artistMap,
     printf("\n");
 }
 
-void displayTrackData(const fs::path track)
+void displayTrackData(const fs::path track, const std::string &prefix, const std::string &suffix)
 {
     TagLib::FileRef f(track.c_str());
     TagLib::String trackName = f.tag()->title();
     TagLib::String artistName = f.tag()->artist();
     TagLib::String albumName = f.tag()->album();
     unsigned int trackNumber = f.tag()->track();
-    printf("   %d - %s\n", trackNumber, trackName.toCString(true));
+    if (!prefix.empty())
+        printf("%s", prefix.c_str());
+    printf("track %d: %s", trackNumber, trackName.toCString(true));
+    if (!suffix.empty())
+        printf("%s", suffix.c_str());
+    else
+        printf("\n");
 }
 
 void playTrack(const fs::path track)
 {
-    std::string command = "mplayer -vo null -msglevel all=0 \"" + track.string() + "\"";
+    std::string command = "mplayer -novideo \"" + track.string() + "\"";
     system(command.c_str());
 }
 
 void playTracks(const std::set<fs::path> &tracks)
 {
-    std::string command = "mplayer -vo null -msglevel all=0";
+    std::string command = "mplayer -novideo";
 
     for (const auto &track : tracks)
         command += " \"" + track.string() + "\"";
-    system(command.c_str());
+
+    FILE *fp = popen(command.c_str(), "r");
+    if (fp == nullptr)
+    {
+        perror("popen failed");
+        return;
+    }
+
+    char buffer[1024];
+    while (fgets(buffer, sizeof(buffer), fp) != nullptr)
+    {
+        // add new line to buffer to ensure it updates as intended
+        buffer[sizeof(buffer) - 1] = '\n';
+
+        std::string line(buffer);
+        std::transform(line.begin(), line.end(), line.begin(), ::tolower);
+        if (line.find("track: ") != std::string::npos)
+        {
+            size_t start = line.find("track: ") + 7; // length of "track: "
+            size_t end = line.find("\n", start);
+            std::string trackNumber = line.substr(start, end - start);
+            try
+            {
+                std::size_t idx = std::stoul(trackNumber);
+                if (idx > 0)
+                    --idx;
+                if (idx < tracks.size())
+                {
+                    auto it = tracks.begin();
+                    std::advance(it, idx);
+                    displayTrackData(*it, "now playing:\n  ", "\n");
+                }
+            }
+            catch (...)
+            {
+            }
+        }
+        else if (line.find("a: ") != std::string::npos)
+        {
+            displayProgress(line);
+        }
+    }
+
+    pclose(fp);
+}
+
+void displayProgress(const std::string &line)
+{
+    std::regex pattern(
+        R"(a:\s*([\d\.]+)\s*\(([\d\.:]+)\)\s*of\s*([\d\.]+)\s*\(([\d\.:]+)\)\s*([\d\.]+)%)");
+
+    std::smatch match;
+    if (std::regex_search(line, match, pattern))
+    {
+        double secs_elapsed = std::stod(match[1].str());
+        double total_secs = std::stod(match[3].str());
+        double percent = secs_elapsed / total_secs * 100.0;
+
+        printf("\r%ds/%ds (%d%%)\t\t", (int)secs_elapsed, (int)total_secs, (int)percent);
+        fflush(stdout);
+    }
+    else
+    {
+        // no match
+    }
 }
