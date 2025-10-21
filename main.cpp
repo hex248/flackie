@@ -12,6 +12,8 @@ namespace fs = std::filesystem;
 
 inline bool isAudioFile(const fs::path &filePath);
 std::set<fs::path> collect(const fs::path &directory, bool directoriesOnly = true);
+void displayLibrary(const std::map<std::string, std::set<fs::path>> &artistMap,
+                    const std::map<std::string, std::set<fs::path>> &albumMap);
 void displayTrackData(const fs::path track);
 void playTrack(const fs::path track);
 void playTracks(const std::set<fs::path> &tracks);
@@ -90,6 +92,39 @@ std::set<fs::path> collect(const fs::path &directory, bool directoriesOnly)
             elements.insert(element.path());
     }
     return elements;
+}
+
+void displayLibrary(const std::map<std::string, std::set<fs::path>> &artistMap,
+                    const std::map<std::string, std::set<fs::path>> &albumMap)
+{
+    for (const auto &artistPair : artistMap)
+    {
+        const std::string &artistName = artistPair.first;
+        const std::set<fs::path> &albums = artistPair.second;
+
+        printf("%s\n", artistName.c_str());
+
+        for (const auto &albumPath : albums)
+        {
+            std::string albumName = albumPath.filename().string();
+            printf("  %s\n", albumName.c_str());
+
+            auto albumIt = albumMap.find(albumName);
+            if (albumIt != albumMap.end())
+            {
+                const std::set<fs::path> &tracks = albumIt->second;
+                for (const auto &track : tracks)
+                {
+                    displayTrackData(track);
+                }
+            }
+            else
+            {
+                printf("    No tracks found for album: %s\n", albumName.c_str());
+            }
+        }
+    }
+    printf("\n");
 }
 
 void displayTrackData(const fs::path track)
