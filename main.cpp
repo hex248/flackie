@@ -12,6 +12,8 @@ namespace fs = std::filesystem;
 #include <taglib/fileref.h>
 #include <taglib/tag.h>
 
+#include <laserpants/dotenv/dotenv.h>
+
 std::size_t random_0_to_n(std::size_t n);
 inline bool isAudioFile(const fs::path &filePath);
 std::set<fs::path> collect(const fs::path &directory, bool directoriesOnly = true);
@@ -24,7 +26,11 @@ void displayProgress(const std::string &line);
 
 int main()
 {
-    std::string artistsDirectory = "/home/ob/music/artists";
+    dotenv::init();
+
+    const char *envArtistsDir = std::getenv("ARTISTS_DIRECTORY");
+    printf("ARTISTS_DIRECTORY: %s\n", envArtistsDir ? envArtistsDir : "(not set)");
+    std::string artistsDirectory = envArtistsDir ? envArtistsDir : "/home/ob/music/artists";
     std::set<fs::path> artists = collect(artistsDirectory);
     std::map<std::string, std::set<fs::path>> artistMap;
     std::map<std::string, std::set<fs::path>> albumMap;

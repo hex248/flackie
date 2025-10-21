@@ -5,9 +5,10 @@ mkdir -p build
 cd build
 cmake ..
 cmake --build .
+cd ..
 
 echo ""
 echo "------------------------"
 echo ""
 
-./flackie
+./build/flackie
