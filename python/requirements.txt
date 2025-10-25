@@ -1,7 +1,9 @@
 gpiod==2.4.0
 gpiodevice==0.0.5
 inky==2.2.1
-numpy==2.3.4
+numpy==2.2.6
+opencv-python==4.12.0.88
+opencv-python-headless==4.12.0.88
 pillow==12.0.0
 smbus2==0.5.0
 spidev==3.8

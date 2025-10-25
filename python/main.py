@@ -1,6 +1,7 @@
 import subprocess
 
 from PIL import Image, ImageDraw, ImageFont
+import numpy as np
 
 def format_time(seconds: int) -> str:
     mins = seconds // 60
@@ -20,12 +21,21 @@ except Exception as e:
 
 dimensions = (display.width, display.height) if display else (250, 122)
 
-WHITE = display.WHITE if display else "#ffffff"
-BLACK = display.BLACK if display else "#000000"
-RED = display.RED if display else "#df3131"
-YELLOW = display.YELLOW if display else "#efef14"
+WHITE = 0
+BLACK = 1
+RED = 2
+YELLOW = 3
+
+PALETTE_RGB = [
+    255, 255, 255,  # white
+    0, 0, 0,        # black
+    223, 49, 49,    # red
+    239, 239, 20,   # yellow
+]
 
 image = Image.new("P", dimensions, WHITE)
+# Pillow expects a palette of (256*3), so the rest must be padded with zeros
+image.putpalette(PALETTE_RGB + [0] * (768 - len(PALETTE_RGB)))
 draw = ImageDraw.Draw(image)
 title_font = ImageFont.truetype("./fonts/JetBrainsMono-SemiBold.ttf", 20)
 album_font = ImageFont.truetype("./fonts/JetBrainsMono-SemiBold.ttf", 18)
@@ -33,7 +43,6 @@ artist_font = ImageFont.truetype("./fonts/JetBrainsMono-SemiBold.ttf", 14)
 time_font = ImageFont.truetype("./fonts/JetBrainsMono-SemiBold.ttf", 12)
 
 padding = 10
-# draw.rectangle((padding, padding, dimensions[0]-padding, dimensions[1]-padding), outline=RED)
 
 draw.text((padding, padding), "title", BLACK, font=title_font)
 draw.text((padding, padding + 26), "album", BLACK, font=album_font)
@@ -49,15 +58,23 @@ start_y = dimensions[1] - padding - progress_bar_height
 end_x = dimensions[0] - padding
 end_y = start_y + progress_bar_height
 
-draw.rectangle((start_x, start_y, end_x, end_y), outline=BLACK, fill=WHITE)
 progress_width = int(234 * progress_percent)
-draw.rectangle((start_x, start_y, start_x + progress_width, end_y), fill=BLACK)
+draw.rectangle((start_x, start_y, start_x + progress_width, end_y), fill=RED)
+draw.rectangle((start_x, start_y, end_x, end_y), outline=BLACK)
 
 track_progress_formatted = format_time(track_progress)
 draw.text((start_x, start_y - 18), track_progress_formatted, BLACK, font=time_font)
 track_length_formatted = format_time(track_length)
 draw.text((end_x - 28, start_y - 18), track_length_formatted, BLACK, font=time_font)
 
+art_size = 75
+
+test_image = Image.open("/home/ob/music/artists/Dominic Fike/Sunburn/sunburn.png")
+test_image = test_image.resize((art_size, art_size)).convert("RGB")
+# use main image as palette source for quantization
+test_image = test_image.quantize(palette=image, dither=Image.Dither.NONE)
+
+image.paste(test_image, (dimensions[0] - art_size - padding, padding))
 
 if display:
     display.set_image(image)
@@ -65,4 +82,5 @@ if display:
 else:
     path = "/tmp/inky-simulated-output.png"
     image.save(path)
+    # test_image.save(path)
     subprocess.run(["imv", path, "-w", "inky-floating"])
