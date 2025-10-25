@@ -149,7 +149,7 @@ void displayTrackData(const fs::path track, const std::string &prefix, const std
     unsigned int trackNumber = f.tag()->track();
     if (!prefix.empty())
         printf("%s", prefix.c_str());
-    printf("track %d: %s", trackNumber, trackName.toCString(true));
+    printf("%d: %s", trackNumber, trackName.toCString(true));
     if (!suffix.empty())
         printf("%s", suffix.c_str());
     else
