@@ -1,14 +1,3 @@
-import subprocess
-
-from PIL import Image, ImageDraw, ImageFont
-import numpy as np
-
-def format_time(seconds: int) -> str:
-    mins = seconds // 60
-    secs = seconds % 60
-    return f"{mins}:{secs:02d}"
-
-# set up display - if it isn't available, it will move on in dev mode
 from inky import auto, InkyPHAT
 display: InkyPHAT = None
 try:
@@ -18,69 +7,29 @@ except Exception as e:
         print("no display connected, moving on... (dev mode)")
     else:
         print(f"error with display: {e}")
+        
+from PIL import Image
 
-dimensions = (display.width, display.height) if display else (250, 122)
+from display import show_track
 
-WHITE = 0
-BLACK = 1
-RED = 2
-YELLOW = 3
+def main():
+    image = Image.open("/home/ob/music/artists/Dominic Fike/Sunburn/sunburn.png")
+    title = "title"
+    album = "album"
+    artist = "artist"
+    track_progress = 30
+    track_length = 120
 
-PALETTE_RGB = [
-    255, 255, 255,  # white
-    0, 0, 0,        # black
-    223, 49, 49,    # red
-    239, 239, 20,   # yellow
-]
+    show_track(
+        image,
+        title,
+        album,
+        artist,
+        track_progress,
+        track_length,
+        display
+    )
 
-image = Image.new("P", dimensions, WHITE)
-# Pillow expects a palette of (256*3), so the rest must be padded with zeros
-image.putpalette(PALETTE_RGB + [0] * (768 - len(PALETTE_RGB)))
-draw = ImageDraw.Draw(image)
-title_font = ImageFont.truetype("./fonts/JetBrainsMono-SemiBold.ttf", 20)
-album_font = ImageFont.truetype("./fonts/JetBrainsMono-SemiBold.ttf", 18)
-artist_font = ImageFont.truetype("./fonts/JetBrainsMono-SemiBold.ttf", 14)
-time_font = ImageFont.truetype("./fonts/JetBrainsMono-SemiBold.ttf", 12)
 
-padding = 10
-
-draw.text((padding, padding), "title", BLACK, font=title_font)
-draw.text((padding, padding + 26), "album", BLACK, font=album_font)
-draw.text((padding, padding + 52), "artist", BLACK, font=artist_font)
-
-track_length = 119
-track_progress = 12
-progress_percent = track_progress / track_length
-progress_bar_height = 6
-
-start_x = padding
-start_y = dimensions[1] - padding - progress_bar_height
-end_x = dimensions[0] - padding
-end_y = start_y + progress_bar_height
-
-progress_width = int(234 * progress_percent)
-draw.rectangle((start_x, start_y, start_x + progress_width, end_y), fill=RED)
-draw.rectangle((start_x, start_y, end_x, end_y), outline=BLACK)
-
-track_progress_formatted = format_time(track_progress)
-draw.text((start_x, start_y - 18), track_progress_formatted, BLACK, font=time_font)
-track_length_formatted = format_time(track_length)
-draw.text((end_x - 28, start_y - 18), track_length_formatted, BLACK, font=time_font)
-
-art_size = 75
-
-test_image = Image.open("/home/ob/music/artists/Dominic Fike/Sunburn/sunburn.png")
-test_image = test_image.resize((art_size, art_size)).convert("RGB")
-# use main image as palette source for quantization
-test_image = test_image.quantize(palette=image, dither=Image.Dither.NONE)
-
-image.paste(test_image, (dimensions[0] - art_size - padding, padding))
-
-if display:
-    display.set_image(image)
-    display.show()
-else:
-    path = "/tmp/inky-simulated-output.png"
-    image.save(path)
-    # test_image.save(path)
-    subprocess.run(["imv", path, "-w", "inky-floating"])
+if __name__ == "__main__":
+    main()
