@@ -30,7 +30,7 @@ def show_track(
 ):
     dimensions = (display_device.width, display_device.height) if display_device else (250, 122)
 
-    image = Image.new("P", dimensions, WHITE)
+    image = Image.new("P", dimensions, BLACK)
     # Pillow expects a palette of (256*3), so the rest must be padded with zeros
     image.putpalette(PALETTE_RGB + [0] * (768 - len(PALETTE_RGB)))
 
@@ -45,14 +45,14 @@ def show_track(
         image.paste(art_image, (dimensions[0] - art_size - padding, padding))
 
     draw = ImageDraw.Draw(image)
-    title_font = ImageFont.truetype("./fonts/JetBrainsMono-Bold.ttf", 18)
-    album_font = ImageFont.truetype("./fonts/JetBrainsMono-Bold.ttf", 14)
-    artist_font = ImageFont.truetype("./fonts/JetBrainsMono-Bold.ttf", 14)
-    time_font = ImageFont.truetype("./fonts/JetBrainsMono-Bold.ttf", 12)
+    title_font = ImageFont.truetype("./fonts/JetBrainsMono-SemiBold.ttf", 18)
+    album_font = ImageFont.truetype("./fonts/JetBrainsMono-SemiBold.ttf", 14)
+    artist_font = ImageFont.truetype("./fonts/JetBrainsMono-SemiBold.ttf", 14)
+    time_font = ImageFont.truetype("./fonts/JetBrainsMono-SemiBold.ttf", 12)
 
-    draw.text((padding, padding), f"{title}", BLACK, font=title_font, stroke_fill=WHITE, stroke_width=2)
-    draw.text((padding, padding + 28), f"{album}", BLACK, font=album_font, stroke_fill=WHITE, stroke_width=2)
-    draw.text((padding, padding + 50), f"{artist}", BLACK, font=artist_font, stroke_fill=WHITE, stroke_width=2)
+    draw.text((padding, padding), f"{title}", WHITE, font=title_font, stroke_fill=BLACK, stroke_width=1)
+    draw.text((padding, padding + 28), f"{album}", WHITE, font=album_font, stroke_fill=BLACK, stroke_width=1)
+    draw.text((padding, padding + 50), f"{artist}", WHITE, font=artist_font, stroke_fill=BLACK, stroke_width=1)
 
     progress_percent = track_progress / track_length
     progress_bar_height = 6
@@ -64,12 +64,12 @@ def show_track(
 
     progress_width = int(234 * progress_percent)
     draw.rectangle((start_x, start_y, start_x + progress_width, end_y), fill=RED)
-    draw.rectangle((start_x, start_y, end_x, end_y), outline=BLACK)
+    draw.rectangle((start_x, start_y, end_x, end_y), outline=RED)
 
     track_progress_formatted = format_time(track_progress)
-    draw.text((start_x, start_y - 18), track_progress_formatted, BLACK, font=time_font)
+    draw.text((start_x, start_y - 18), track_progress_formatted, WHITE, font=time_font)
     track_length_formatted = format_time(track_length)
-    draw.text((end_x - 28, start_y - 18), track_length_formatted, BLACK, font=time_font)
+    draw.text((end_x - 28, start_y - 18), track_length_formatted, WHITE, font=time_font)
 
 
     if display_device:
