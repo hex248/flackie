@@ -33,17 +33,26 @@ def show_track(
     image = Image.new("P", dimensions, WHITE)
     # Pillow expects a palette of (256*3), so the rest must be padded with zeros
     image.putpalette(PALETTE_RGB + [0] * (768 - len(PALETTE_RGB)))
-    draw = ImageDraw.Draw(image)
-    title_font = ImageFont.truetype("./fonts/JetBrainsMono-SemiBold.ttf", 20)
-    album_font = ImageFont.truetype("./fonts/JetBrainsMono-SemiBold.ttf", 18)
-    artist_font = ImageFont.truetype("./fonts/JetBrainsMono-SemiBold.ttf", 14)
-    time_font = ImageFont.truetype("./fonts/JetBrainsMono-SemiBold.ttf", 12)
 
     padding = 10
+    art_size = 75
 
-    draw.text((padding, padding), f"{title}", BLACK, font=title_font)
-    draw.text((padding, padding + 26), f"{album}", BLACK, font=album_font)
-    draw.text((padding, padding + 52), f"{artist}", BLACK, font=artist_font)
+    if art_image:
+        art_image = art_image.resize((art_size, art_size)).convert("RGB")
+        # use main image as palette source for quantization
+        art_image = art_image.quantize(palette=image, dither=Image.Dither.NONE)
+
+        image.paste(art_image, (dimensions[0] - art_size - padding, padding))
+
+    draw = ImageDraw.Draw(image)
+    title_font = ImageFont.truetype("./fonts/JetBrainsMono-Bold.ttf", 18)
+    album_font = ImageFont.truetype("./fonts/JetBrainsMono-Bold.ttf", 14)
+    artist_font = ImageFont.truetype("./fonts/JetBrainsMono-Bold.ttf", 14)
+    time_font = ImageFont.truetype("./fonts/JetBrainsMono-Bold.ttf", 12)
+
+    draw.text((padding, padding), f"{title}", BLACK, font=title_font, stroke_fill=WHITE, stroke_width=2)
+    draw.text((padding, padding + 28), f"{album}", BLACK, font=album_font, stroke_fill=WHITE, stroke_width=2)
+    draw.text((padding, padding + 50), f"{artist}", BLACK, font=artist_font, stroke_fill=WHITE, stroke_width=2)
 
     progress_percent = track_progress / track_length
     progress_bar_height = 6
@@ -62,13 +71,6 @@ def show_track(
     track_length_formatted = format_time(track_length)
     draw.text((end_x - 28, start_y - 18), track_length_formatted, BLACK, font=time_font)
 
-    art_size = 75
-
-    art_image = art_image.resize((art_size, art_size)).convert("RGB")
-    # use main image as palette source for quantization
-    art_image = art_image.quantize(palette=image, dither=Image.Dither.NONE)
-
-    image.paste(art_image, (dimensions[0] - art_size - padding, padding))
 
     if display_device:
         display_device.set_image(image)
