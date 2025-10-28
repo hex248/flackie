@@ -42,16 +42,16 @@ def show_track(
         # use main image as palette source for quantization
         art_image = art_image.quantize(palette=image, dither=Image.Dither.NONE)
 
-        image.paste(art_image, (dimensions[0] - art_size - padding, padding))
+        image.paste(art_image, (dimensions[0] - art_size - padding, dimensions[1] - art_size - padding))
 
     draw = ImageDraw.Draw(image)
-    title_font = ImageFont.truetype("./fonts/JetBrainsMono-SemiBold.ttf", 18)
+    title_font = ImageFont.truetype("./fonts/JetBrainsMono-SemiBold.ttf", 16)
     album_font = ImageFont.truetype("./fonts/JetBrainsMono-SemiBold.ttf", 14)
     artist_font = ImageFont.truetype("./fonts/JetBrainsMono-SemiBold.ttf", 14)
     time_font = ImageFont.truetype("./fonts/JetBrainsMono-SemiBold.ttf", 12)
 
     draw.text((padding, padding), f"{title}", WHITE, font=title_font, stroke_fill=BLACK, stroke_width=1)
-    draw.text((padding, padding + 28), f"{album}", WHITE, font=album_font, stroke_fill=BLACK, stroke_width=1)
+    draw.text((padding, padding + 26), f"{album}", WHITE, font=album_font, stroke_fill=BLACK, stroke_width=1)
     draw.text((padding, padding + 50), f"{artist}", WHITE, font=artist_font, stroke_fill=BLACK, stroke_width=1)
 
     progress_percent = track_progress / track_length
@@ -60,6 +60,8 @@ def show_track(
     start_x = padding
     start_y = dimensions[1] - padding - progress_bar_height
     end_x = dimensions[0] - padding
+    if art_image:
+        end_x -= art_size + padding
     end_y = start_y + progress_bar_height
 
     progress_width = int(234 * progress_percent)
