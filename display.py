@@ -1,5 +1,7 @@
+import os
 import subprocess
 from PIL import Image, ImageDraw, ImageFont
+from utils import get_track_info
 
 WHITE = 0
 BLACK = 1
@@ -18,6 +20,7 @@ def format_time(seconds: int) -> str:
     secs = seconds % 60
     return f"{mins}:{secs:02d}"
 
+padding = 10
 
 def show_track(
     art_image: Image.Image,
@@ -34,7 +37,6 @@ def show_track(
     # Pillow expects a palette of (256*3), so the rest must be padded with zeros
     image.putpalette(PALETTE_RGB + [0] * (768 - len(PALETTE_RGB)))
 
-    padding = 10
     art_size = 75
 
     if art_image:
@@ -72,6 +74,90 @@ def show_track(
     draw.text((start_x, start_y - 18), track_progress_formatted, WHITE, font=time_font)
     track_length_formatted = format_time(track_length)
     draw.text((end_x - 28, start_y - 18), track_length_formatted, WHITE, font=time_font)
+
+
+    if display_device:
+        display_device.set_image(image)
+        display_device.show()
+    else:
+        path = "/tmp/inky-simulated-output.png"
+        image.save(path)
+        subprocess.run(["imv", path, "-w", "inky-floating"])
+
+
+def show_selector(library, artist_idx, album_idx, track_idx, level="artist", display_device=None):
+
+    dimensions = (display_device.width, display_device.height) if display_device else (250, 122)
+    
+    image = Image.new("P", dimensions, BLACK)
+    image.putpalette(PALETTE_RGB + [0] * (768 - len(PALETTE_RGB)))
+
+    draw = ImageDraw.Draw(image)
+
+    # cross for centering
+    draw.line((0, dimensions[1] // 2, dimensions[0], dimensions[1] // 2), fill=RED, width=1)
+    draw.line((dimensions[0] // 2, 0, dimensions[0] // 2, dimensions[1]), fill=RED, width=1)
+
+    font_size = 48
+    font = ImageFont.truetype("./fonts/JetBrainsMono-SemiBold.ttf", font_size)
+    font_small = ImageFont.truetype("./fonts/JetBrainsMono-SemiBold.ttf", 12)
+
+
+    artists = list(library.keys())
+    artists.sort()
+    current_artist = artists[artist_idx]
+    albums = list(library[current_artist].keys())
+    albums.sort()
+    current_album = albums[album_idx]
+    tracks = library[current_artist][current_album]
+    tracks.sort()
+    current_track = tracks[track_idx]
+
+    if level == "artist":
+        text = current_artist
+    elif level == "album":
+        text = current_album
+    elif level == "track":
+        text = current_track
+        ## get track information from file
+        track_path = os.path.join("/home/ob/music/artists", current_artist, current_album, current_track)
+        title, album, artist, length, img = get_track_info(track_path)
+        if title:
+            text = title
+    else:
+        text = "unknown"
+
+    mode_text = ""
+    if level == "artist":
+        mode_text += "[artist]"
+    else:
+        mode_text += " artist "
+    if level == "album":
+        mode_text += "[album]"
+    else:
+        mode_text += " album "
+    if level == "track":
+        mode_text += "[track]"
+    else:
+        mode_text += " track "
+    
+    draw.text((dimensions[0] - padding - font_small.getlength(mode_text), dimensions[1] - padding - 12), mode_text, WHITE, font=font_small)
+    
+
+    bbox = draw.textbbox((0, 0), text, font=font)
+    text_width = bbox[2] - bbox[0]
+    text_height = bbox[3] - bbox[1]
+    while text_width > dimensions[0] - 2 * padding and font_size > 10:
+        font_size -= 2
+        font = ImageFont.truetype("./fonts/JetBrainsMono-SemiBold.ttf", font_size)
+        bbox = draw.textbbox((0, 0), text, font=font)
+        text_width = bbox[2] - bbox[0]
+        text_height = bbox[3] - bbox[1]
+
+    text_x = (dimensions[0] - text_width) // 2
+    text_y = ((dimensions[1] - text_height) // 2) - (font_size / 4)
+    draw.text((text_x, text_y), text, WHITE, font=font, stroke_fill=BLACK, stroke_width=1)
+
 
 
     if display_device:

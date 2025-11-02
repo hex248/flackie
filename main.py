@@ -65,14 +65,10 @@ from PIL import Image
 import random
 import time
 import os
-from mutagen import File
-from mutagen.flac import FLAC
-from mutagen.mp3 import MP3
-from mutagen.wave import WAVE
-from mutagen.m4a import M4A
+from utils import get_track_info
 
 
-from display import show_track
+from display import show_track, show_selector
 from library import load_library
 
 # tkinter setup
@@ -80,52 +76,12 @@ window.title("inky-floating")
 window.geometry("250x122")
 window.configure(bg="black")
 
+levels = ["artist", "album", "track"]
+current_level_idx = 0
 window.bind_all("<Key>", lambda e: display.close() if getattr(e, "keysym", "").lower() == "q" else None)
 window.bind_all("<Escape>", lambda e: display.close())
 window.bind_all("<Control-c>", lambda e: display.close())
 
-def get_track_info(track_path):
-    audiofile = File(track_path)
-    
-    # delete previous image
-    if os.path.exists("/tmp/album_art_extracted.png"):
-        os.remove("/tmp/album_art_extracted.png")
-    image_found = False
-    if isinstance(audiofile, FLAC):
-        title = audiofile.tags.get("title", ["unknown"])[0]
-        album = audiofile.tags.get("album", ["unknown"])[0]
-        artist = audiofile.tags.get("artist", ["unknown"])[0]
-        length = int(audiofile.info.length)
-        if audiofile.pictures:
-            picture = audiofile.pictures[0]
-            image_data = picture.data
-            with open("/tmp/album_art_extracted.png", "wb") as img_out:
-                img_out.write(image_data)
-            image_found = True
-        else:
-            print(f"no album art found in the track: {track_path}")
-    elif isinstance(audiofile, MP3):
-        title = audiofile.tags.get("TIT2", "unknown")
-        album = audiofile.tags.get("TALB", "unknown")
-        artist = audiofile.tags.get("TPE1", "unknown")
-        length = int(audiofile.info.length)
-        if "APIC:" in audiofile.tags:
-            apic = audiofile.tags["APIC:"]
-            image_data = apic.data
-            with open("/tmp/album_art_extracted.png", "wb") as img_out:
-                img_out.write(image_data)
-            image_found = True
-        else:
-            print(f"no album art found in the track: {track_path}")
-    else:
-        print("unsupported audio format for metadata extraction.")
-        print(track_path)
-    
-    if image_found:
-        image = Image.open("/tmp/album_art_extracted.png")
-        image = image.convert("RGB")
-    
-    return title, album, artist, length, image if image_found else None
 
 def get_random_track(parent_path, library):
     random_artist = random.choice(list(library.keys()))
@@ -145,25 +101,56 @@ def main():
     album = "album"
     artist = "artist"
     progress = 0
+
+    artist_idx = 0
+    album_idx = 0
+    track_idx = 0
+
+    artists = []
+    albums = []
+    tracks = []
     
-    track_path = get_random_track(path, library)
-    title, album, artist, length, image = get_track_info(track_path)
+    def get_data():
+        artists = list(library.keys())
+        artists.sort()
+        albums = list(library[artists[artist_idx]].keys())
+        albums.sort()
+        tracks = library[artists[artist_idx]][albums[album_idx]]
+        tracks.sort()
+        return artists, albums, tracks
 
-    print(f"playing {title} by {artist} from the album {album}")
+    artists, albums, tracks = get_data()
+    
+    show_selector(library, artist_idx, album_idx, track_idx, levels[current_level_idx], display)
 
-    show_track(
-        art_image=image,
-        title=title,
-        album=album,
-        artist=artist,
-        track_progress=progress,
-        track_length=length,
-        display_device=display
-    )
+    def change_level():
+        global current_level_idx
+        current_level_idx = (current_level_idx + 1) % len(levels)
+        print(f"changing level to: {levels[current_level_idx]} ({current_level_idx})")
+        show_selector(library, artist_idx, album_idx, track_idx, levels[current_level_idx], display)
+    window.bind_all("<space>", lambda e: change_level())
 
-    # hang for 5 seconds
-    time.sleep(5)
+    def change_item(operation = 1):
+        nonlocal artist_idx, album_idx, track_idx
+        nonlocal artists, albums, tracks
+        if current_level_idx == 0:
+            artist_idx = (artist_idx + operation) % len(artists)
+            # reset lower levels
+            album_idx = 0
+            track_idx = 0
+        elif current_level_idx == 1:
+            album_idx = (album_idx + operation) % len(albums)
+            # reset lower level
+            track_idx = 0
+        elif current_level_idx == 2:
+            track_idx = (track_idx + operation) % len(tracks)
+        artists, albums, tracks = get_data()
+        show_selector(library, artist_idx, album_idx, track_idx, levels[current_level_idx], display)
+    
+    window.bind_all("<Up>", lambda e: change_item(-1))
+    window.bind_all("<Down>", lambda e: change_item(1))
 
+    window.mainloop()
 
 
 if __name__ == "__main__":
