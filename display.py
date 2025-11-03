@@ -85,7 +85,7 @@ def show_track(
         subprocess.run(["imv", path, "-w", "inky-floating"])
 
 
-def show_selector(library, artist_idx, album_idx, track_idx, level="artist", display_device=None):
+def show_selector(library, artist_idx, album_idx, track_idx, level, current_playback_state, title, album, artist, length, image, display_device=None):
 
     dimensions = (display_device.width, display_device.height) if display_device else (250, 122)
     
@@ -95,8 +95,8 @@ def show_selector(library, artist_idx, album_idx, track_idx, level="artist", dis
     draw = ImageDraw.Draw(image)
 
     # cross for centering
-    draw.line((0, dimensions[1] // 2, dimensions[0], dimensions[1] // 2), fill=RED, width=1)
-    draw.line((dimensions[0] // 2, 0, dimensions[0] // 2, dimensions[1]), fill=RED, width=1)
+    # draw.line((0, dimensions[1] // 2, dimensions[0], dimensions[1] // 2), fill=RED, width=1)
+    # draw.line((dimensions[0] // 2, 0, dimensions[0] // 2, dimensions[1]), fill=RED, width=1)
 
     font_size = 48
     font = ImageFont.truetype("./fonts/JetBrainsMono-SemiBold.ttf", font_size)
@@ -121,28 +121,22 @@ def show_selector(library, artist_idx, album_idx, track_idx, level="artist", dis
         text = current_track
         ## get track information from file
         track_path = os.path.join("/home/ob/music/artists", current_artist, current_album, current_track)
-        title, album, artist, length, img = get_track_info(track_path)
-        if title:
-            text = title
+        current_title, album, artist, length, img = get_track_info(track_path)
+        if current_title:
+            text = current_title
     else:
         text = "unknown"
 
     mode_text = ""
-    if level == "artist":
-        mode_text += "[artist]"
-    else:
-        mode_text += " artist "
-    if level == "album":
-        mode_text += "[album]"
-    else:
-        mode_text += " album "
-    if level == "track":
-        mode_text += "[track]"
-    else:
-        mode_text += " track "
+    if level == "artist": mode_text += "[artist]"
+    else: mode_text += " artist "
+    if level == "album": mode_text += "[album]"
+    else: mode_text += " album "
+    if level == "track": mode_text += "[track]"
+    else: mode_text += " track "
     
-    draw.text((dimensions[0] - padding - font_small.getlength(mode_text), dimensions[1] - padding - 12), mode_text, WHITE, font=font_small)
-    
+    mode_text_length = font_small.getlength(mode_text)
+    draw.text((dimensions[0]/2 - mode_text_length/2, dimensions[1] - padding - 12), mode_text, WHITE, font=font_small)
 
     bbox = draw.textbbox((0, 0), text, font=font)
     text_width = bbox[2] - bbox[0]
@@ -158,6 +152,12 @@ def show_selector(library, artist_idx, album_idx, track_idx, level="artist", dis
     text_y = ((dimensions[1] - text_height) // 2) - (font_size / 4)
     draw.text((text_x, text_y), text, WHITE, font=font, stroke_fill=BLACK, stroke_width=1)
 
+    if current_playback_state == True:
+        draw.text((padding, padding), f"playing {title} - {artist}", WHITE, font=font_small, stroke_fill=BLACK, stroke_width=1)
+    elif current_playback_state == False:
+        draw.text((padding, padding), f"paused {title} - {artist}", WHITE, font=font_small, stroke_fill=BLACK, stroke_width=1)
+    elif current_playback_state == None:
+        draw.text((padding, padding), "select a track to play", WHITE, font=font_small, stroke_fill=BLACK, stroke_width=1)
 
 
     if display_device:

@@ -69,6 +69,7 @@ from utils import get_track_info
 
 
 from display import show_track, show_selector
+from player import play_file, toggle_pause, stop_playback
 from library import load_library
 
 # tkinter setup
@@ -78,9 +79,13 @@ window.configure(bg="black")
 
 levels = ["artist", "album", "track"]
 current_level_idx = 0
-window.bind_all("<Key>", lambda e: display.close() if getattr(e, "keysym", "").lower() == "q" else None)
-window.bind_all("<Escape>", lambda e: display.close())
-window.bind_all("<Control-c>", lambda e: display.close())
+
+def close():
+    stop_playback()
+    display.close()
+window.bind_all("<Key>", lambda e: close() if getattr(e, "keysym", "").lower() == "q" else None)
+window.bind_all("<Escape>", lambda e: close())
+window.bind_all("<Control-c>", lambda e: close())
 
 
 def get_random_track(parent_path, library):
@@ -96,11 +101,12 @@ def main():
     path = "/home/ob/music/artists"
     library = load_library(path)
 
-    image = None
     title = "title"
     album = "album"
     artist = "artist"
     progress = 0
+    length = 0
+    image = None
 
     artist_idx = 0
     album_idx = 0
@@ -120,15 +126,15 @@ def main():
         return artists, albums, tracks
 
     artists, albums, tracks = get_data()
-    
-    show_selector(library, artist_idx, album_idx, track_idx, levels[current_level_idx], display)
+    current_playback_state = None
 
-    def change_level():
+    show_selector(library, artist_idx, album_idx, track_idx, levels[current_level_idx], current_playback_state, title, album, artist, length, image, display)
+
+    def change_level(operation = 1):
         global current_level_idx
-        current_level_idx = (current_level_idx + 1) % len(levels)
+        current_level_idx = (current_level_idx + operation) % len(levels)
         print(f"changing level to: {levels[current_level_idx]} ({current_level_idx})")
-        show_selector(library, artist_idx, album_idx, track_idx, levels[current_level_idx], display)
-    window.bind_all("<space>", lambda e: change_level())
+        show_selector(library, artist_idx, album_idx, track_idx, levels[current_level_idx], current_playback_state, title, album, artist, length, image, display)
 
     def change_item(operation = 1):
         nonlocal artist_idx, album_idx, track_idx
@@ -145,10 +151,30 @@ def main():
         elif current_level_idx == 2:
             track_idx = (track_idx + operation) % len(tracks)
         artists, albums, tracks = get_data()
-        show_selector(library, artist_idx, album_idx, track_idx, levels[current_level_idx], display)
+        show_selector(library, artist_idx, album_idx, track_idx, levels[current_level_idx], current_playback_state, title, album, artist, length, image, display)
     
+    window.bind_all("<Left>", lambda e: change_level(-1))
+    window.bind_all("<Right>", lambda e: change_level(1))
     window.bind_all("<Up>", lambda e: change_item(-1))
     window.bind_all("<Down>", lambda e: change_item(1))
+
+    def play_selected():
+        nonlocal current_playback_state, title, album, artist, progress, length, image
+        progress = 0
+
+        file_path = os.path.join("/home/ob/music/artists", artists[artist_idx], albums[album_idx], tracks[track_idx])
+        title, album, artist, length, image = get_track_info(file_path)
+        play_file(file_path)
+        current_playback_state = True
+        show_selector(library, artist_idx, album_idx, track_idx, levels[current_level_idx], current_playback_state, title, album, artist, length, image, display)
+    window.bind_all("<Return>", lambda e: play_selected())
+
+    def toggle_pause_event():
+        nonlocal current_playback_state, title, album, artist, progress, length, image
+        current_playback_state = toggle_pause()
+
+        show_selector(library, artist_idx, album_idx, track_idx, levels[current_level_idx], current_playback_state, title, album, artist, length, image, display)
+    window.bind_all("<space>", lambda e: toggle_pause_event())
 
     window.mainloop()
 
