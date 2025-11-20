@@ -41,25 +41,25 @@ main_display.clear()
 main_display.bl_DutyCycle(100)
 
 
-top_image = Image.new("RGB", (top_display.height, top_display.width), "BLACK")
+top_image = Image.new("RGB", (top_display.width, top_display.height), "BLACK")
 top_draw = ImageDraw.Draw(top_image)
-bottom_image = Image.new("RGB", (bottom_display.height, bottom_display.width), "BLACK")
+bottom_image = Image.new("RGB", (bottom_display.width, bottom_display.height), "BLACK")
 bottom_draw = ImageDraw.Draw(bottom_image)
-main_image = Image.new("RGB", (main_display.height, main_display.width), "BLACK")
+main_image = Image.new("RGB", (main_display.width, main_display.height), "BLACK")
 main_draw = ImageDraw.Draw(main_image)
 
-font20 = ImageFont.truetype("../lib/Font/Font01.ttf", 20)
+font20 = ImageFont.truetype("./fonts/JetBrainsMono-Regular.ttf", 20)
 
 top_draw.text((10, 10), "Top Display", fill="WHITE", font=font20)
 bottom_draw.text((10, 10), "Bottom Display", fill="WHITE", font=font20)
 main_draw.text((10, 10), "Main Display", fill="WHITE", font=font20)
 
 print("putting text on displays")
-top_display.ShowImage(top_image.rotate(270))
-bottom_display.ShowImage(bottom_image.rotate(270))
-main_display.ShowImage(main_image.rotate(270))
+top_display.ShowImage(top_image)
+bottom_display.ShowImage(bottom_image)
+main_display.ShowImage(main_image)
 
-time.sleep(10)
+time.sleep(100)
 
 
 # shut down displays
