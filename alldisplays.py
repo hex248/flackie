@@ -25,6 +25,9 @@ MAIN_BL = 19
 MAIN_bus = 1
 MAIN_device = 0
 
+BTN1_PIN = 25
+BTN2_PIN = 26
+
 top_display = LCD_0inch96.LCD_0inch96(spi=SPI.SpiDev(TOP_bus, TOP_device), spi_freq=10000000, rst=TOP_RST, dc=TOP_DC, bl=TOP_BL)
 top_display.Init()
 top_display.clear()
@@ -40,6 +43,29 @@ main_display.Init()
 main_display.clear()
 main_display.bl_DutyCycle(100)
 
+
+btn1 = top_display.gpio_mode(BTN1_PIN,top_display.INPUT,None)
+btn2 = top_display.gpio_mode(BTN2_PIN,top_display.INPUT,None)
+
+current_state_btn1 = 0
+current_state_btn2 = 0
+
+def btn1_callback():
+    global current_state_btn1
+    global current_state_btn2
+    print("btn1 pressed")
+    current_state_btn1 = 1
+    current_state_btn2 = 0
+
+def btn2_callback():
+    global current_state_btn1
+    global current_state_btn2
+    print("btn2 pressed")
+    current_state_btn1 = 0
+    current_state_btn2 = 1
+
+btn1.when_activated = btn1_callback
+btn2.when_activated = btn2_callback
 
 top_image = Image.new("RGB", (top_display.width, top_display.height), "BLACK")
 top_draw = ImageDraw.Draw(top_image)
