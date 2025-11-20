@@ -1,8 +1,10 @@
 cffi==2.0.0
+colorzero==2.0
 deprecation==2.1.0
 filetype==1.2.0
 gpiod==2.4.0
 gpiodevice==0.0.5
+gpiozero==2.0.1
 inky==2.2.1
 mutagen==1.47.0
 numpy==2.2.6
@@ -12,6 +14,7 @@ packaging==25.0
 pillow==12.0.0
 PyAudio==0.2.14
 pycparser==2.23
+setuptools==80.9.0
 smbus2==0.5.0
 soundfile==0.13.1
 spidev==3.8
