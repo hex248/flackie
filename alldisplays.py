@@ -56,6 +56,9 @@ def btn1_callback():
     print("btn1 pressed")
     current_state_btn1 = 1
     current_state_btn2 = 0
+    time.sleep(0.1)
+    current_state_btn1 = 0
+    print("btn1 UNPRESSED")
 
 def btn2_callback():
     global current_state_btn1
@@ -63,6 +66,9 @@ def btn2_callback():
     print("btn2 pressed")
     current_state_btn1 = 0
     current_state_btn2 = 1
+    time.sleep(0.1)
+    current_state_btn2 = 0
+    print("btn2 UNPRESSED")
 
 btn1.when_activated = btn1_callback
 btn2.when_activated = btn2_callback
