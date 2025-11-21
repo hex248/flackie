@@ -37,6 +37,35 @@ second_font = ImageFont.truetype("./fonts/JetBrainsMono-Regular.ttf", 20)
 main_font = ImageFont.truetype("./fonts/JetBrainsMono-Regular.ttf", 30)
 running = True
 
+current_state_btn1 = 0
+current_state_btn2 = 0
+
+def btn1_callback():
+    global current_state_btn1
+    global current_state_btn2
+    print("btn1 pressed")
+    current_state_btn1 = 1
+    current_state_btn2 = 0
+    time.sleep(0.1)
+    current_state_btn1 = 0
+    print("btn1 UNPRESSED")
+
+def btn2_callback():
+    global current_state_btn1
+    global current_state_btn2
+    print("btn2 pressed")
+    current_state_btn1 = 0
+    current_state_btn2 = 1
+    time.sleep(0.1)
+    current_state_btn2 = 0
+    print("btn2 UNPRESSED")
+
+btn1, btn2, = display.get_buttons()
+
+btn1.when_activated = btn1_callback
+btn2.when_activated = btn2_callback
+
+
 timer = 0
 tick_time = 0.1
 

@@ -28,6 +28,13 @@ main_display = LCD_1inch3.LCD_1inch3(spi=SPI.SpiDev(MAIN_bus, MAIN_device), spi_
 top_display = LCD_0inch96.LCD_0inch96(spi=SPI.SpiDev(TOP_bus, TOP_device), spi_freq=10000000, rst=TOP_RST, dc=TOP_DC, bl=TOP_BL)
 bottom_display = LCD_0inch96.LCD_0inch96(spi=SPI.SpiDev(BOTTOM_bus, BOTTOM_device), spi_freq=10000000, rst=BOTTOM_RST, dc=BOTTOM_DC, bl=BOTTOM_BL)
 
+
+BTN1_PIN = 25
+BTN2_PIN = 26
+
+btn1 = top_display.gpio_mode(BTN1_PIN,top_display.INPUT,None)
+btn2 = top_display.gpio_mode(BTN2_PIN,top_display.INPUT,None)
+
 def init(displays: list[int] = [0,1,2]):
     if 0 in displays:
         print("initialising main display (0)")
@@ -63,6 +70,9 @@ def get_images(displays: list[int] = [0,1,2]):
         to_return["2"] = bottom_image
         
     return to_return
+
+def get_buttons():
+    return btn1, btn2
 
 
 # display: 0, 1, 2
