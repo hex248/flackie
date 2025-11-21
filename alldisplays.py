@@ -80,19 +80,21 @@ bottom_draw = ImageDraw.Draw(bottom_image)
 main_image = Image.new("RGB", (main_display.width, main_display.height), "BLACK")
 main_draw = ImageDraw.Draw(main_image)
 
-font20 = ImageFont.truetype("./fonts/JetBrainsMono-Regular.ttf", 20)
+second_font = ImageFont.truetype("./fonts/JetBrainsMono-Regular.ttf", 20)
+main_font = ImageFont.truetype("./fonts/JetBrainsMono-Regular.ttf", 30)
 
-top_draw.text((10, 10), "Top Display", fill="WHITE", font=font20)
-bottom_draw.text((10, 10), "Bottom Display", fill="WHITE", font=font20)
-main_draw.text((10, 10), "Main Display", fill="WHITE", font=font20)
 
-print("putting text on displays")
+top_draw.text((10, 10), "1", fill="WHITE", font=second_font)
+bottom_draw.text((10, 10), "2", fill="WHITE", font=second_font)
+main_draw.text((10, 10), "0", fill="RED", font=main_font)
+
 top_display.ShowImage(top_image)
 bottom_display.ShowImage(bottom_image)
 main_display.ShowImage(main_image)
 
-time.sleep(100)
-
+while True:
+    print("tick")
+    time.sleep(1)
 
 # shut down displays
 top_display.module_exit()
