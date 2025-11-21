@@ -1,103 +1,59 @@
-import signal
-
-# for debugging without actual device
-import tkinter as tk
-window = None
-from PIL import ImageTk
-class InkySimulator:
-    def __init__(self, width, height):
-        self.width = width
-        self.height = height
-        self.image = None
-
-    def __init_label(self):
-        global window
-        if window is None:
-            window = tk.Tk()
-
-        if self.image:
-            self.tk_image = ImageTk.PhotoImage(self.image.convert("RGB"))
-        else:
-            self.tk_image = None
-
-        self.label = tk.Label(window, image=self.tk_image, bg="black")
-        self.label.pack()
-
-    def set_image(self, image):
-        self.image = image
-        if not hasattr(self, "label"):
-            self.__init_label()
-
-        if self.image is not None:
-            tk_image = ImageTk.PhotoImage(self.image.convert("RGB"))
-            self.label.configure(image=tk_image)
-            self.label.image = tk_image
-
-    def show(self):
-        # process updates (image change)
-        if window:
-            try:
-                window.update_idletasks()
-                window.update()
-            except tk.TclError:
-                pass
-    def close(self):
-        if window:
-            window.destroy()
-        signal.raise_signal(signal.SIGKILL)
-        
-
-from inky import auto, InkyPHAT
-try:
-    display = auto()
-except Exception as e:
-    if ("No EEPROM detected!" in str(e)):
-        print("no display connected, moving on... (dev mode)")
-        window = tk.Tk()
-
-        inky_simulator = InkySimulator(250, 122)
-        display = inky_simulator
-    else:
-        print(f"error with display: {e}")
-
-        
-from PIL import Image
-import random
-import time
 import os
-from utils import get_track_info
+
+# if there is no spi port dev mode is true
+dev = not os.path.exists("/dev/spidev0.0")
+
+print(dev)
 
 
-from display import show_track, show_selector
+import time
+import display
 from player import play_file, toggle_pause, stop_playback
 from library import load_library
+from utils import get_track_info
+from PIL import Image, ImageDraw, ImageFont
 
-# tkinter setup
-window.title("inky-floating")
-window.geometry("250x122")
-window.configure(bg="black")
+
 
 levels = ["artist", "album", "track"]
 current_level_idx = 0
 
 def close():
     stop_playback()
-    display.close()
-window.bind_all("<Key>", lambda e: close() if getattr(e, "keysym", "").lower() == "q" else None)
-window.bind_all("<Escape>", lambda e: close())
-window.bind_all("<Control-c>", lambda e: close())
+    display.clean_up()
+
+if dev:
+    images = {
+        "0": Image.new("RGB", (240, 240), "black"),
+        "1": Image.new("RGB", (80, 160), "black"),
+        "2": Image.new("RGB", (80, 160), "black"),
+    }
+else:
+    display.init([0,1,2])
+    images = display.get_images()
 
 
-def get_random_track(parent_path, library):
-    random_artist = random.choice(list(library.keys()))
-    random_album = random.choice(list(library[random_artist].keys()))
-    random_track = random.choice(library[random_artist][random_album])
+second_font = ImageFont.truetype("./fonts/JetBrainsMono-Regular.ttf", 20)
+main_font = ImageFont.truetype("./fonts/JetBrainsMono-Regular.ttf", 30)
+running = True
 
-    track_path = os.path.join(parent_path, random_artist, random_album, random_track)
+timer = 0
+tick_time = 0.1
 
-    return track_path
+def loop():
+    global timer
+    print("tick")
+    if int(timer) == timer:
+        print(f"{timer}s")
+    
+    pass
 
 def main():
+    global timer
+    global tick_time
+    global running
+    global dev
+
     path = "/home/ob/music/artists"
     library = load_library(path)
 
@@ -106,15 +62,10 @@ def main():
     artist = "artist"
     progress = 0
     length = 0
-    image = None
 
     artist_idx = 0
     album_idx = 0
     track_idx = 0
-
-    artists = []
-    albums = []
-    tracks = []
     
     def get_data():
         artists = list(library.keys())
@@ -128,55 +79,40 @@ def main():
     artists, albums, tracks = get_data()
     current_playback_state = None
 
-    show_selector(library, artist_idx, album_idx, track_idx, levels[current_level_idx], current_playback_state, title, album, artist, length, image, display)
+    # get random artist
+    artist = artists[artist_idx]
+    album = albums[album_idx]
+    track = tracks[track_idx]
 
-    def change_level(operation = 1):
-        global current_level_idx
-        current_level_idx = (current_level_idx + operation) % len(levels)
-        print(f"changing level to: {levels[current_level_idx]} ({current_level_idx})")
-        show_selector(library, artist_idx, album_idx, track_idx, levels[current_level_idx], current_playback_state, title, album, artist, length, image, display)
+    track_path = os.path.join("/home/ob/music/artists", artist, album, track)
+    track, album, artist, length, img = get_track_info(track_path)
 
-    def change_item(operation = 1):
-        nonlocal artist_idx, album_idx, track_idx
-        nonlocal artists, albums, tracks
-        if current_level_idx == 0:
-            artist_idx = (artist_idx + operation) % len(artists)
-            # reset lower levels
-            album_idx = 0
-            track_idx = 0
-        elif current_level_idx == 1:
-            album_idx = (album_idx + operation) % len(albums)
-            # reset lower level
-            track_idx = 0
-        elif current_level_idx == 2:
-            track_idx = (track_idx + operation) % len(tracks)
-        artists, albums, tracks = get_data()
-        show_selector(library, artist_idx, album_idx, track_idx, levels[current_level_idx], current_playback_state, title, album, artist, length, image, display)
+    main_image = images["0"]
+    main_draw = ImageDraw.Draw(main_image)
+
+    top_image = images["1"]
+    top_draw = ImageDraw.Draw(top_image)
     
-    window.bind_all("<Left>", lambda e: change_level(-1))
-    window.bind_all("<Right>", lambda e: change_level(1))
-    window.bind_all("<Up>", lambda e: change_item(-1))
-    window.bind_all("<Down>", lambda e: change_item(1))
+    bottom_image = images["2"]
+    bottom_draw = ImageDraw.Draw(bottom_image)
 
-    def play_selected():
-        nonlocal current_playback_state, title, album, artist, progress, length, image
-        progress = 0
+    main_image.paste(img.resize(main_image.size), (0,0))
+    top_draw.text((0, 0), album, fill="WHITE", font=main_font)
+    bottom_draw.text((0, 0), track, fill="WHITE", font=main_font)
 
-        file_path = os.path.join("/home/ob/music/artists", artists[artist_idx], albums[album_idx], tracks[track_idx])
-        title, album, artist, length, image = get_track_info(file_path)
-        play_file(file_path)
-        current_playback_state = True
-        show_selector(library, artist_idx, album_idx, track_idx, levels[current_level_idx], current_playback_state, title, album, artist, length, image, display)
-    window.bind_all("<Return>", lambda e: play_selected())
 
-    def toggle_pause_event():
-        nonlocal current_playback_state, title, album, artist, progress, length, image
-        current_playback_state = toggle_pause()
+    display.draw_to(0, main_image)
+    display.draw_to(1, top_image)
+    display.draw_to(2, bottom_image)
+    
+    while running:
+        loop()
+        time.sleep(tick_time)
+        timer += tick_time
+    
+    close()
 
-        show_selector(library, artist_idx, album_idx, track_idx, levels[current_level_idx], current_playback_state, title, album, artist, length, image, display)
-    window.bind_all("<space>", lambda e: toggle_pause_event())
 
-    window.mainloop()
 
 
 if __name__ == "__main__":
