@@ -40,19 +40,19 @@ def init(displays: list[int] = [0,1,2]):
         print("initialising main display (0)")
         main_display.Init()
         main_display.clear()
-        main_display.bl_DutyCycle(100)
+        main_display.bl_DutyCycle(10)
 
     if 1 in displays:
         print("initialising main display (1)")
         top_display.Init()
         top_display.clear()
-        top_display.bl_DutyCycle(100)
+        top_display.bl_DutyCycle(10)
 
     if 2 in displays:
         print("initialising main display (2)")
         bottom_display.Init()
         bottom_display.clear()
-        bottom_display.bl_DutyCycle(100)
+        bottom_display.bl_DutyCycle(10)
 
 
 def get_images(displays: list[int] = [0,1,2]):
