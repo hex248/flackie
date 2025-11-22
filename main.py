@@ -162,6 +162,7 @@ def draw(current_playback_state, title: str, album: str, artist: str, img: Image
 # end of draw function
 
 running = True
+bluetooth_connected = False
 
 ######################
 # LOAD MUSIC LIBRARY #
@@ -221,6 +222,7 @@ def choice_cycle(diff=1):
     global tracks
 
     if current_level_idx == 0:
+        old = artist_idx
         artist_idx += diff
         if artist_idx < 0:
             artist_idx = len(artists) - 1
@@ -229,9 +231,12 @@ def choice_cycle(diff=1):
         # reset album and track idx
         album_idx = 0
         track_idx = 0
-        update_cached_lists()
-        update_track_data()
+
+        if old != artist_idx:
+            update_cached_lists()
+            update_track_data(play=True)
     elif current_level_idx == 1:
+        old = album_idx
         album_idx += diff
         if album_idx < 0:
             album_idx = len(albums) - 1
@@ -239,15 +244,20 @@ def choice_cycle(diff=1):
             album_idx = 0
         # reset track idx
         track_idx = 0
-        update_cached_lists()
-        update_track_data()
+
+        if old != album_idx:
+            update_cached_lists()
+            update_track_data(play=True)
     elif current_level_idx == 2:
+        old = track_idx
         track_idx += diff
         if track_idx < 0:
             track_idx = len(tracks) - 1
         elif track_idx >= len(tracks):
             track_idx = 0
-        update_track_data(get_image=False)
+        
+        if old != track_idx:
+            update_track_data(get_image=False, play=True)
 
 
 ##########################################################
@@ -266,7 +276,7 @@ artist = artists[artist_idx]
 album = albums[album_idx]
 track = tracks[track_idx]
 
-def update_track_data(get_image: bool = True):
+def update_track_data(get_image = True, play = False):
     global title
     global album
     global artist
@@ -276,6 +286,7 @@ def update_track_data(get_image: bool = True):
     global artists
     global albums
     global tracks
+    global current_playback_state
 
     artist = artists[artist_idx]
     album = albums[album_idx]
@@ -284,7 +295,11 @@ def update_track_data(get_image: bool = True):
     track_path = os.path.join(path, artist, album, track)
     
     title, album, artist, length, img = get_track_info(track_path, get_image=get_image)
-    progress = 0
+    if bluetooth_connected and play:
+        stop_playback()
+        play_file(track_path)
+        current_playback_state = True
+        progress = 0
 
 
 update_track_data()
@@ -317,7 +332,6 @@ draw(current_playback_state, title, album, artist, img, progress, length, [0,1,2
 ########
 # LOOP #
 ########
-bluetooth_connected = False
 timer = 0
 while running:
     if not bluetooth_connected:

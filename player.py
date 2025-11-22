@@ -1,12 +1,15 @@
 from rich.console import Console
 console = Console()
 print = console.print
+# suppress pyaudio ALSA warnings
+import os, sys
+devnull = os.open(os.devnull, os.O_WRONLY)
+os.dup2(devnull, sys.stderr.fileno())
 
 import threading
 import time
 import pyaudio
 import soundfile as sf
-import sys
 
 
 player_lock = threading.Lock()
@@ -17,6 +20,7 @@ pause_event = None
 
 def playback_thread(file_path, stop_event: threading.Event, pause_event: threading.Event):
     try:
+        print(f"[green]playing [bold]{file_path}[/bold][/green]")
         data, samplerate = sf.read(file_path, dtype="float32")
 
         p = pyaudio.PyAudio()
@@ -47,7 +51,7 @@ def playback_thread(file_path, stop_event: threading.Event, pause_event: threadi
         except Exception:
             pass
 
-        print("[green]playback finished[/green]")
+        print("[blue]playback finished[/blue]")
     except Exception as e:
         print(f"[red]playback error: {e}[/red]")
 
