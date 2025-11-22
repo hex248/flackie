@@ -60,14 +60,17 @@ def get_images(displays: list[int] = [0,1,2]):
     if 0 in displays:
         main_image = Image.new("RGB", (main_display.width, main_display.height), "BLACK")
         to_return["0"] = main_image
+        draw_to(0, main_image)
 
     if 1 in displays:
         top_image = Image.new("RGB", (top_display.width, top_display.height), "BLACK")
         to_return["1"] = top_image
+        draw_to(1, top_image)
 
     if 2 in displays:
         bottom_image = Image.new("RGB", (bottom_display.width, bottom_display.height), "BLACK")
         to_return["2"] = bottom_image
+        draw_to(2, bottom_image)
         
     return to_return
 
