@@ -62,4 +62,4 @@ def get_track_info(track_path, get_image: bool = True):
         print("unsupported audio format for metadata extraction.")
         print(track_path)
     
-    return title, album, artist, length, image if image_found else None
+    return f"{title}", f"{album}", f"{artist}", length, image if image_found else None
