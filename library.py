@@ -18,8 +18,8 @@ def load_library(directory: str) -> dict:
             if len(tracks) > 0:
                 artist_dict[artist][album] = tracks
             else:
-                print(f"WARNING: no valid tracks found a:{artist} al:{album}")
+                print(f"[red][bold]WARNING:[/bold] no valid tracks found a:{artist} al:{album}[/red]")
         if len(artist_dict[artist]) == 0:
-            print(f"WARNING: no valid albums found a:{artist}")
+            print(f"[red][bold]WARNING:[/bold] no valid albums found a:{artist}[/red]")
 
     return artist_dict

@@ -29,7 +29,7 @@ def playback_thread(file_path, stop_event: threading.Event, pause_event: threadi
         chunk_size = 1024
         for i in range(0, len(data), chunk_size):
             if stop_event.is_set():
-                print("interrupted playback")
+                print("[red]interrupted playback[/red]")
                 break
 
             pause_event.wait()
@@ -47,9 +47,9 @@ def playback_thread(file_path, stop_event: threading.Event, pause_event: threadi
         except Exception:
             pass
 
-        print("playback finished")
+        print("[green]playback finished[/green]")
     except Exception as e:
-        print(f"playback error: {e}")
+        print(f"[red]playback error: {e}[/red]")
 
 
 def play_file(file_path):
@@ -78,18 +78,18 @@ def toggle_pause():
     if pause_event.is_set():
         # pause
         pause_event.clear()
-        print("paused")
+        print("[yellow]paused[/yellow]")
         return False
     else:
         # unpause
         pause_event.set()
-        print("resumed")
+        print("[green]resumed[/green]")
         return True
 
 
 def stop_playback():
     global player_thread, stop_event, pause_event
-    print("stopping playback")
+    print("[yellow]stopping playback[/yellow]")
     if stop_event:
         stop_event.set()
     if pause_event:

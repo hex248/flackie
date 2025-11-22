@@ -45,9 +45,6 @@ def get_track_info(track_path, get_image: bool = True):
             # no cached image, extract from file
             image = optimise_and_save(audiofile.pictures[0].data, f"{cache_path}/{artist}/{album}.jpg")
             image_found = True
-        elif get_image:
-            print(f"no album art found in the track: {track_path}")
-
     elif isinstance(audiofile, MP3):
         title = audiofile.tags.get("TIT2", "unknown")
         album = audiofile.tags.get("TALB", "unknown")
@@ -61,8 +58,6 @@ def get_track_info(track_path, get_image: bool = True):
             # no cached image, extract from file
             image = optimise_and_save(audiofile.tags["APIC:"].data, f"{cache_path}/{artist}/{album}.jpg")
             image_found = True
-        elif get_image:
-            print(f"no album art found in the track: {track_path}")
     elif isinstance(audiofile, M4A):
         title = audiofile.tags.get("\xa9nam", ["unknown"])[0]
         album = audiofile.tags.get("\xa9alb", ["unknown"])[0]
@@ -76,8 +71,6 @@ def get_track_info(track_path, get_image: bool = True):
             # no cached image, extract from file
             image = optimise_and_save(audiofile.tags["covr"][0], f"{cache_path}/{artist}/{album}.jpg")
             image_found = True
-        elif get_image:
-            print(f"no album art found in the track: {track_path}")
     elif isinstance(audiofile, MP4):
         title = audiofile.tags.get("\xa9nam", ["unknown"])[0]
         album = audiofile.tags.get("\xa9alb", ["unknown"])[0]
@@ -91,16 +84,15 @@ def get_track_info(track_path, get_image: bool = True):
             # no cached image, extract from file
             image = optimise_and_save(audiofile.tags["covr"][0], f"{cache_path}/{artist}/{album}.jpg")
             image_found = True
-        elif get_image:
-            print(f"no album art found in the track: {track_path}")
     else:
-        print("unsupported audio format for metadata extraction.")
-        print(track_path)
+        print(f"[red][bold]unsupported audio format for metadata extraction:[/bold] {type(audiofile)}[/red]")
+        print(f"[red][bold]culprit:[/bold] {track_path}[/red]")
         title = "unknown"
         album = "unknown"
         artist = "unknown"
         length = 0
-
-        print(f"file type: {type(audiofile)}")
+    
+    if get_image and not image_found:
+        print(f"[yellow][bold]no album art found in the track:[/bold] {track_path}[/yellow]")
     
     return f"{title}", f"{album}", f"{artist}", length, image if image_found else None
