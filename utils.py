@@ -7,7 +7,7 @@ from mutagen.mp3 import MP3
 from mutagen.wave import WAVE
 from mutagen.m4a import M4A
 
-def get_track_info(track_path):
+def get_track_info(track_path, get_image: bool = True):
     audiofile = File(track_path)
     
     # delete previous image
@@ -19,26 +19,26 @@ def get_track_info(track_path):
         album = audiofile.tags.get("album", ["unknown"])[0]
         artist = audiofile.tags.get("artist", ["unknown"])[0]
         length = int(audiofile.info.length)
-        if audiofile.pictures:
+        if get_image and audiofile.pictures:
             picture = audiofile.pictures[0]
             image_data = picture.data
             with open("/tmp/album_art_extracted.png", "wb") as img_out:
                 img_out.write(image_data)
             image_found = True
-        else:
+        elif get_image:
             print(f"no album art found in the track: {track_path}")
     elif isinstance(audiofile, MP3):
         title = audiofile.tags.get("TIT2", "unknown")
         album = audiofile.tags.get("TALB", "unknown")
         artist = audiofile.tags.get("TPE1", "unknown")
         length = int(audiofile.info.length)
-        if "APIC:" in audiofile.tags:
+        if get_image and "APIC:" in audiofile.tags:
             apic = audiofile.tags["APIC:"]
             image_data = apic.data
             with open("/tmp/album_art_extracted.png", "wb") as img_out:
                 img_out.write(image_data)
             image_found = True
-        else:
+        elif get_image:
             print(f"no album art found in the track: {track_path}")
     else:
         print("unsupported audio format for metadata extraction.")
