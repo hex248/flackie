@@ -7,6 +7,7 @@ dotenv.load_dotenv()
 import os
 import time
 import display
+import bluetooth
 from player import play_file, toggle_pause, stop_playback
 from library import load_library
 from utils import get_track_info
@@ -280,7 +281,7 @@ def update_track_data(get_image: bool = True):
     album = albums[album_idx]
     track = tracks[track_idx]
 
-    track_path = os.path.join("/home/ob/music/artists", artist, album, track)
+    track_path = os.path.join(path, artist, album, track)
     
     title, album, artist, length, img = get_track_info(track_path, get_image=get_image)
     progress = 0
@@ -312,11 +313,20 @@ btn2.when_activated = btn2_callback
 # initial draw
 draw(current_playback_state, title, album, artist, img, progress, length, [0,1,2])
 
+
+########
+# LOOP #
+########
+bluetooth_connected = False
+timer = 0
 while running:
-    # progress += 1
-    # # only updates screen 2 (shows progress)
-    # draw(current_playback_state, title, album, artist, img, progress, length, [2])
-    # time.sleep(0.1)
+    if not bluetooth_connected:
+        if timer >= 1.0 or timer == 0:
+            timer = 0
+            bluetooth_connected = bluetooth.connect_to_device()
+        
+        timer += 0.1
+    time.sleep(0.1)
     pass
 
 close()
