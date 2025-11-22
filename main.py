@@ -38,7 +38,7 @@ def get_font(path, size):
 second_font = get_font("./fonts/JetBrainsMono-Regular.ttf", 12)
 main_font = get_font("./fonts/JetBrainsMono-Regular.ttf", 30)
 
-def draw(current_playback_state, title, album, artist, img: Image.Image, progress, length, displays: list[int] = [0,1,2]):
+def draw(current_playback_state, title: str, album: str, artist: str, img: Image.Image, progress, length, displays: list[int] = [0,1,2]):
     if 0 in displays:
         if img is not None:
             #############
@@ -159,10 +159,6 @@ running = True
 ######################
 # LOAD MUSIC LIBRARY #
 ######################
-artist_idx = 0
-album_idx = 0
-track_idx = 0
-
 path = "/home/ob/music/artists"
 library = load_library(path)
 
@@ -170,6 +166,10 @@ artists = list(library.keys())
 artists.sort()
 albums = []
 tracks = []
+
+artist_idx = 0
+album_idx = 0
+track_idx = 0
 
 def update_cached_lists():
     global albums, tracks

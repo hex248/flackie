@@ -6,6 +6,7 @@ from mutagen.flac import FLAC
 from mutagen.mp3 import MP3
 from mutagen.wave import WAVE
 from mutagen.m4a import M4A
+from mutagen.mp4 import MP4
 
 def optimise_and_save(image_data, save_path: str):
     with open("/tmp/album_art_extracted.png", "wb") as img_out:
@@ -27,6 +28,7 @@ def get_track_info(track_path, get_image: bool = True):
         os.remove("/tmp/album_art_extracted.png")
     image_found = False
     cache_path = f"/home/ob/.cache/flackie/images"
+
     if isinstance(audiofile, FLAC):
         title = audiofile.tags.get("title", ["unknown"])[0]
         album = audiofile.tags.get("album", ["unknown"])[0]
@@ -58,8 +60,44 @@ def get_track_info(track_path, get_image: bool = True):
             image_found = True
         elif get_image:
             print(f"no album art found in the track: {track_path}")
+    elif isinstance(audiofile, M4A):
+        title = audiofile.tags.get("\xa9nam", ["unknown"])[0]
+        album = audiofile.tags.get("\xa9alb", ["unknown"])[0]
+        artist = audiofile.tags.get("\xa9ART", ["unknown"])[0]
+        length = int(audiofile.info.length)
+        if get_image and os.path.exists(f"{cache_path}/{artist}/{album}.jpg"):
+            # use cached image if available
+            image = Image.open(f"{cache_path}/{artist}/{album}.jpg")
+            image_found = True
+        elif get_image and "covr" in audiofile.tags:
+            # no cached image, extract from file
+            image = optimise_and_save(audiofile.tags["covr"][0], f"{cache_path}/{artist}/{album}.jpg")
+            image_found = True
+        elif get_image:
+            print(f"no album art found in the track: {track_path}")
+    elif isinstance(audiofile, MP4):
+        title = audiofile.tags.get("\xa9nam", ["unknown"])[0]
+        album = audiofile.tags.get("\xa9alb", ["unknown"])[0]
+        artist = audiofile.tags.get("\xa9ART", ["unknown"])[0]
+        length = int(audiofile.info.length)
+        if get_image and os.path.exists(f"{cache_path}/{artist}/{album}.jpg"):
+            # use cached image if available
+            image = Image.open(f"{cache_path}/{artist}/{album}.jpg")
+            image_found = True
+        elif get_image and "covr" in audiofile.tags:
+            # no cached image, extract from file
+            image = optimise_and_save(audiofile.tags["covr"][0], f"{cache_path}/{artist}/{album}.jpg")
+            image_found = True
+        elif get_image:
+            print(f"no album art found in the track: {track_path}")
     else:
         print("unsupported audio format for metadata extraction.")
         print(track_path)
+        title = "unknown"
+        album = "unknown"
+        artist = "unknown"
+        length = 0
+
+        print(f"file type: {type(audiofile)}")
     
     return f"{title}", f"{album}", f"{artist}", length, image if image_found else None
