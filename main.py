@@ -1,8 +1,4 @@
 import os
-
-# if there is no spi port dev mode is true
-dev = not os.path.exists("/dev/spidev0.0")
-
 import time
 import display
 from player import play_file, toggle_pause, stop_playback
@@ -22,15 +18,8 @@ def close():
 #########################
 # DISPLAY & IMAGE SETUP #
 #########################
-if dev:
-    images = {
-        "0": Image.new("RGB", (240, 240), "black"),
-        "1": Image.new("RGB", (80, 160), "black"),
-        "2": Image.new("RGB", (80, 160), "black"),
-    }
-else:
-    display.init([0,1,2])
-    images = display.get_images()
+display.init([0,1,2])
+images = display.get_images()
 
 padding = 10
 
@@ -38,15 +27,13 @@ second_font = ImageFont.truetype("./fonts/JetBrainsMono-Regular.ttf", 12)
 main_font = ImageFont.truetype("./fonts/JetBrainsMono-Regular.ttf", 30)
 
 
-def draw(current_playback_state, title, album, artist, img, progress, length, displays: list[int] = [0,1,2]):
+def draw(current_playback_state, title, album, artist, img: Image.Image, progress, length, displays: list[int] = [0,1,2]):
     if 0 in displays:
         if img is not None:
             #############
             # COVER ART #
             #############
-            main_image = Image.new("RGB", (images["0"].width, images["0"].height), "BLACK")
-            main_image.paste(img.resize(main_image.size), (0, 0))
-            display.draw_to(0, main_image)
+            display.draw_to(0, img)
     
     if 1 in displays:
         top_image = Image.new("RGB", (images["1"].width, images["1"].height), "BLACK")
