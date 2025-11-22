@@ -37,19 +37,16 @@ btn2 = top_display.gpio_mode(BTN2_PIN,top_display.INPUT,None)
 
 def init(displays: list[int] = [0,1,2]):
     if 0 in displays:
-        print("initialising main display (0)")
         main_display.Init()
         main_display.clear()
         main_display.bl_DutyCycle(10)
 
     if 1 in displays:
-        print("initialising main display (1)")
         top_display.Init()
         top_display.clear()
         top_display.bl_DutyCycle(10)
 
     if 2 in displays:
-        print("initialising main display (2)")
         bottom_display.Init()
         bottom_display.clear()
         bottom_display.bl_DutyCycle(10)
