@@ -1,3 +1,6 @@
+from rich.console import Console
+console = Console()
+print = console.print
 
 from PIL import Image
 import os

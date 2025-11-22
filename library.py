@@ -1,3 +1,7 @@
+from rich.console import Console
+console = Console()
+print = console.print
+
 import os
 
 def load_library(directory: str) -> dict:
