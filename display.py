@@ -39,17 +39,17 @@ def init(displays: list[int] = [0,1,2]):
     if 0 in displays:
         main_display.Init()
         main_display.clear()
-        main_display.bl_DutyCycle(10)
+        main_display.bl_DutyCycle(100)
 
     if 1 in displays:
         top_display.Init()
         top_display.clear()
-        top_display.bl_DutyCycle(10)
+        top_display.bl_DutyCycle(100)
 
     if 2 in displays:
         bottom_display.Init()
         bottom_display.clear()
-        bottom_display.bl_DutyCycle(10)
+        bottom_display.bl_DutyCycle(100)
 
 
 def get_images(displays: list[int] = [0,1,2]):
