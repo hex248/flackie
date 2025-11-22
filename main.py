@@ -2,6 +2,8 @@ from rich.console import Console
 console = Console()
 print = console.print
 
+import dotenv
+dotenv.load_dotenv()
 import os
 import time
 import display
@@ -163,7 +165,7 @@ running = True
 ######################
 # LOAD MUSIC LIBRARY #
 ######################
-path = "/home/ob/music/artists"
+path = os.getenv("ARTISTS_DIRECTORY", "/home/ob/music/artists")
 library = load_library(path)
 
 artists = list(library.keys())
