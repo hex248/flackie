@@ -21,11 +21,22 @@ def close():
 display.init([0,1,2])
 images = display.get_images()
 
+top_image = Image.new("RGB", (images["1"].width, images["1"].height), "BLACK")
+top_draw = ImageDraw.Draw(top_image)
+bottom_image = Image.new("RGB", (images["2"].width, images["2"].height), "BLACK")
+bottom_draw = ImageDraw.Draw(bottom_image)
+
 padding = 10
 
-second_font = ImageFont.truetype("./fonts/JetBrainsMono-Regular.ttf", 12)
-main_font = ImageFont.truetype("./fonts/JetBrainsMono-Regular.ttf", 30)
+font_cache = {}
+def get_font(path, size):
+    key = (path, size)
+    if key not in font_cache:
+        font_cache[key] = ImageFont.truetype(path, size)
+    return font_cache[key]
 
+second_font = get_font("./fonts/JetBrainsMono-Regular.ttf", 12)
+main_font = get_font("./fonts/JetBrainsMono-Regular.ttf", 30)
 
 def draw(current_playback_state, title, album, artist, img: Image.Image, progress, length, displays: list[int] = [0,1,2]):
     if 0 in displays:
@@ -36,8 +47,9 @@ def draw(current_playback_state, title, album, artist, img: Image.Image, progres
             display.draw_to(0, img)
     
     if 1 in displays:
-        top_image = Image.new("RGB", (images["1"].width, images["1"].height), "BLACK")
-        top_draw = ImageDraw.Draw(top_image)
+        # clear image
+        top_draw.rectangle((0, 0, top_image.width, top_image.height), fill="BLACK")
+
         ###############
         # NAV OPTIONS #
         ###############
@@ -63,14 +75,14 @@ def draw(current_playback_state, title, album, artist, img: Image.Image, progres
         # SELECTED ITEM #
         #################
         font_size = 36
-        font = ImageFont.truetype("./fonts/JetBrainsMono-SemiBold.ttf", font_size)
+        font = get_font("./fonts/JetBrainsMono-SemiBold.ttf", font_size)
 
         bbox = top_draw.textbbox((0, 0), text, font=font)
         text_width = bbox[2] - bbox[0]
         text_height = bbox[3] - bbox[1]
         while text_width > top_image.width - 2 * padding and font_size > 6:
             font_size -= 1
-            font = ImageFont.truetype("./fonts/JetBrainsMono-SemiBold.ttf", font_size)
+            font = get_font("./fonts/JetBrainsMono-SemiBold.ttf", font_size)
             bbox = top_draw.textbbox((0, 0), text, font=font)
             text_width = bbox[2] - bbox[0]
             text_height = bbox[3] - bbox[1]
@@ -82,20 +94,20 @@ def draw(current_playback_state, title, album, artist, img: Image.Image, progres
         display.draw_to(1, top_image)
     
     if 2 in displays:
-        bottom_image = Image.new("RGB", (images["2"].width, images["2"].height), "BLACK")
-        bottom_draw = ImageDraw.Draw(bottom_image)
+        bottom_draw.rectangle((0, 0, bottom_image.width, bottom_image.height), fill="BLACK")
+
         if current_playback_state is not None:
             #######################
             # CURRENT TRACK TITLE #
             #######################
             font_size = 36
-            font = ImageFont.truetype("./fonts/JetBrainsMono-SemiBold.ttf", font_size)
+            font = get_font("./fonts/JetBrainsMono-SemiBold.ttf", font_size)
             bbox = bottom_draw.textbbox((0, 0), title, font=font)
             text_width = bbox[2] - bbox[0]
             text_height = bbox[3] - bbox[1]
             while text_width > bottom_image.width - 2 * padding and font_size > 10:
                 font_size -= 1
-                font = ImageFont.truetype("./fonts/JetBrainsMono-SemiBold.ttf", font_size)
+                font = get_font("./fonts/JetBrainsMono-SemiBold.ttf", font_size)
                 bbox = bottom_draw.textbbox((0, 0), title, font=font)
                 text_width = bbox[2] - bbox[0]
                 text_height = bbox[3] - bbox[1]
@@ -119,7 +131,11 @@ def draw(current_playback_state, title, album, artist, img: Image.Image, progres
         ################
         # PROGRESS BAR #
         ################
-        progress_percent = progress / length
+        if length > 0:
+            progress_percent = progress / length
+        else:
+            progress_percent = 0
+
         progress_bar_height = 6
 
         start_x = padding
@@ -150,16 +166,32 @@ track_idx = 0
 path = "/home/ob/music/artists"
 library = load_library(path)
 
-def get_data():
-    artists = list(library.keys())
-    artists.sort()
-    albums = list(library[artists[artist_idx]].keys())
-    albums.sort()
-    tracks = library[artists[artist_idx]][albums[album_idx]]
-    tracks.sort()
-    return artists, albums, tracks
+artists = list(library.keys())
+artists.sort()
+albums = []
+tracks = []
 
-artists, albums, tracks = get_data()
+def update_cached_lists():
+    global albums, tracks
+    # update albums based on current artist
+    if artists:
+        current_artist = artists[artist_idx]
+        albums = list(library[current_artist].keys())
+        albums.sort()
+        
+        # update tracks based on current album
+        if albums and album_idx < len(albums):
+            current_album = albums[album_idx]
+            tracks = library[current_artist][current_album]
+            tracks.sort()
+        else:
+            tracks = []
+    else:
+        albums = []
+        tracks = []
+
+# initial population
+update_cached_lists()
 
 
 ##############
@@ -190,6 +222,7 @@ def choice_cycle(diff=1):
         # reset album and track idx
         album_idx = 0
         track_idx = 0
+        update_cached_lists()
         update_track_data()
     elif current_level_idx == 1:
         album_idx += diff
@@ -199,6 +232,7 @@ def choice_cycle(diff=1):
             album_idx = 0
         # reset track idx
         track_idx = 0
+        update_cached_lists()
         update_track_data()
     elif current_level_idx == 2:
         track_idx += diff
@@ -236,7 +270,6 @@ def update_track_data(get_image: bool = True):
     global albums
     global tracks
 
-    artists, albums, tracks = get_data()
     artist = artists[artist_idx]
     album = albums[album_idx]
     track = tracks[track_idx]
@@ -256,13 +289,13 @@ btn1, btn2, = display.get_buttons()
 
 def btn1_callback():
     nav_cycle(1)
-    displays = [1,2]
+    displays = [1] # only update top display
     draw(current_playback_state, title, album, artist, img, progress, length, displays)
 
 def btn2_callback():
     choice_cycle(1)
-    displays = [1,2]
-    # if artist or album changed, update main display
+    displays = [1,2] # update top and bottom display
+    # if artist or album changed, update main display too
     if current_level_idx in [0, 1]:
         displays.append(0)
     draw(current_playback_state, title, album, artist, img, progress, length, displays)
