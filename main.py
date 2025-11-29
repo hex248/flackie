@@ -329,17 +329,19 @@ btn2.when_activated = btn2_callback
 draw(current_playback_state, title, album, artist, img, progress, length, [0,1,2])
 
 
+
+bluetooth_connected = bluetooth.connect_to_device()
 ########
 # LOOP #
 ########
 timer = 0
 while running:
-    if not bluetooth_connected:
-        if timer >= 1.0 or timer == 0:
-            timer = 0
-            bluetooth_connected = bluetooth.connect_to_device()
+    # if not bluetooth_connected:
+    #     if timer >= 1.0 or timer == 0:
+    #         timer = 0
+    #         bluetooth_connected = bluetooth.connect_to_device()
         
-        timer += 0.1
+    #     timer += 0.1
     time.sleep(0.1)
     pass
 
