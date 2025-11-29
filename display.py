@@ -32,8 +32,6 @@ bottom_display = LCD_0inch96.LCD_0inch96(spi=SPI.SpiDev(BOTTOM_bus, BOTTOM_devic
 BTN1_PIN = 25
 BTN2_PIN = 26
 
-btn1 = top_display.gpio_mode(BTN1_PIN,top_display.INPUT,None)
-btn2 = top_display.gpio_mode(BTN2_PIN,top_display.INPUT,None)
 
 def init(displays: list[int] = [0,1,2]):
     if 0 in displays:
@@ -72,6 +70,8 @@ def get_images(displays: list[int] = [0,1,2]):
     return to_return
 
 def get_buttons():
+    btn1 = top_display.gpio_mode(BTN1_PIN,top_display.INPUT,None)
+    btn2 = top_display.gpio_mode(BTN2_PIN,top_display.INPUT,None)
     return btn1, btn2
 
 
