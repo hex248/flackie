@@ -62,7 +62,8 @@ def update_track_data(get_image = True, play = False):
     track_path = os.path.join(state.get_library_path(), artist, album, track)
     
     title, album, artist, length, img = get_track_info(track_path, get_image=get_image)
-    if bluetooth_connected and play:
+    #if bluetooth_connected and play:
+    if play:
         stop_playback()
         play_file(track_path)
         current_playback_state = True
